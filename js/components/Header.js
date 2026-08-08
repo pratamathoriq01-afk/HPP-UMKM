@@ -1,4 +1,4 @@
-/* ─────────────────── HEADER COMPONENT (PRO-GROWTH LEDGER TOP BAR) ─────────────────── */
+/* ─────────────────── SABLE BROWN & SANDCASTLE MINIMALIST HEADER ─────────────────── */
 (function() {
   const h = React.createElement;
 
@@ -6,50 +6,63 @@
     productName,
     onUpdateProductName,
     onToggleDrawer,
-    onAddProduct
+    onAddProduct,
+    onOpenAI
   }) {
-    return h('header', { className: 'sticky top-0 z-50 bg-[#002045] text-white shadow-md' },
+    return h('header', { className: 'sticky top-0 z-50 bg-[#EFE9DC] text-[#241710] shadow-xs border-b border-[#D4C8B5]' },
       h('div', { className: 'max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4' },
+        
         /* Left: Drawer ☰ + Brand & Title Input */
         h('div', { className: 'flex items-center gap-3 flex-1' },
           h('button', {
             onClick: onToggleDrawer,
-            title: 'Buka Daftar Produk (☰)',
-            className: 'w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 text-white transition flex items-center justify-center font-bold text-lg cursor-pointer border border-white/10'
+            title: 'Buka Daftar Resep (☰)',
+            className: 'w-9 h-9 rounded-xl bg-[#F7F3E9] hover:bg-[#D4C8B5] text-[#241710] transition flex items-center justify-center font-bold text-base cursor-pointer border border-[#D4C8B5] shadow-xs'
           }, '☰'),
 
           h('div', { className: 'flex items-center gap-3 flex-1 max-w-lg' },
-            h('div', { className: 'hidden sm:flex w-8 h-8 rounded-lg bg-[#85f6ad] text-[#002045] items-center justify-center font-black text-sm shadow-xs' },
-              '📊'
+            h('div', { className: 'hidden sm:flex w-9 h-9 rounded-xl bg-[#4A3427] text-white items-center justify-center font-black text-base shadow-xs' },
+              '🍲'
             ),
             h('div', { className: 'flex-1' },
               h('div', { className: 'flex items-center gap-2' },
                 h('input', {
                   type: 'text',
-                  value: productName,
+                  value: productName || '',
                   onChange: (e) => onUpdateProductName(e.target.value),
-                  className: 'text-lg font-bold text-white bg-transparent border-b border-white/20 hover:border-white/50 focus:border-[#85f6ad] focus:outline-none w-full max-w-xs pb-0.5 font-sans',
-                  placeholder: 'Nama Produk...'
+                  className: 'text-base sm:text-lg font-black text-[#241710] bg-transparent border-b-2 border-[#BDB6A3] hover:border-[#8C7259] focus:border-[#4A3427] focus:outline-none w-full max-w-xs pb-0.5 font-heading tracking-tight',
+                  placeholder: 'Nama Resep / Produk...'
                 }),
-                /* Professional SAK EMKM Pastel Badge */
-                h('span', { className: 'hidden md:inline-flex items-center gap-1.5 bg-[#85f6ad]/15 text-[#85f6ad] font-bold border border-[#85f6ad]/30 px-2.5 py-0.5 rounded-full text-[11px] whitespace-nowrap' },
-                  h('span', { className: 'w-1.5 h-1.5 rounded-full bg-[#85f6ad] animate-pulse' }),
-                  'SAK EMKM Financial Standard'
+                h('span', { className: 'hidden md:inline-flex items-center gap-1.5 bg-[#F7F3E9] text-[#241710] font-extrabold border border-[#D4C8B5] px-2.5 py-0.5 rounded-full text-[10px] whitespace-nowrap' },
+                  h('span', { className: 'w-2 h-2 rounded-full bg-[#8C7259] animate-pulse' }),
+                  'SAK EMKM Standard'
                 )
               )
             )
           )
         ),
 
-        /* Right Quick Action: Add New Product */
-        h('div', { className: 'flex items-center gap-3' },
+        /* Right Actions: AI Advisor & Add Recipe (Matched Light Brown & Pure White Text) */
+        h('div', { className: 'flex items-center gap-2.5' },
+          
+          /* AI Advisor Button - Light Brown Pill with 100% PURE WHITE text */
+          h('button', {
+            onClick: onOpenAI,
+            className: 'btn-secondary-taupe px-4 py-2.5 rounded-xl text-white font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-xs'
+          },
+            h('span', { className: 'text-sm' }, '🤖'),
+            h('span', { className: 'hidden sm:inline font-heading tracking-wide text-white font-extrabold' }, 'Juragan AI Advisor')
+          ),
+
+          /* Add Product Button - Light Brown Pill with 100% PURE WHITE text */
           h('button', {
             onClick: onAddProduct,
-            className: 'px-4 py-2 bg-[#006d3c] hover:bg-[#00522c] text-white font-bold text-xs rounded-lg transition flex items-center gap-2 cursor-pointer shadow-xs border border-[#85f6ad]/20'
+            className: 'btn-secondary-taupe px-4 py-2.5 rounded-xl text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs'
           },
-            h('span', null, '➕'),
-            h('span', { className: 'hidden sm:inline' }, 'Tambah Produk Baru')
+            h('span', { className: 'text-white' }, '➕'),
+            h('span', { className: 'hidden sm:inline font-heading text-white font-extrabold' }, 'Resep Baru')
           )
+
         )
       )
     );

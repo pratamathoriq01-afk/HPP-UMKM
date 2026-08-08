@@ -1,133 +1,138 @@
-/* ─────────────────── TAB 3: HARGA APLIKASI ONLINE (REVERSE MARGIN) ─────────────────── */
+/* ─────────────────── MODUL 3: HARGA APLIKASI ONLINE (REVERSE-MARGIN) - SABLE BROWN & SANDCASTLE ─────────────────── */
 (function() {
   const h = React.createElement;
 
-  window.TabOnlineComponent = function TabOnline({ prod, onUpdateProduct }) {
+  window.TabOnlineComponent = function TabOnline({ prod, onUpdateProduct, onNavigateTab }) {
     const fmtIDR = window.AppMath.formatIDR;
     const calculateHPP = window.AppMath.calculateHPP;
-    const calculateBaseSellingPrice = window.AppMath.calculateBaseSellingPrice;
-    const calculateAppSellingPrice = window.AppMath.calculateAppSellingPrice;
+    const calculateOfflinePrice = window.AppMath.calculateOfflinePrice;
+    const calculateOnlinePrice = window.AppMath.calculateOnlinePrice;
     const FlexibleInput = window.FlexibleInput;
 
-    const { hppPerUnit } = calculateHPP(prod);
-    const { basePrice } = calculateBaseSellingPrice(hppPerUnit, prod);
-    const { appPrice, commFrac, fixedFee } = calculateAppSellingPrice(basePrice, prod);
+    const hppData = calculateHPP(prod);
+    const offlineData = calculateOfflinePrice(hppData.hppMurni, prod);
+    const onlineData = calculateOnlinePrice(offlineData.effectiveOfflinePrice, prod);
 
-    const commissionAmount = appPrice * commFrac;
-    const netPayout = Math.max(0, appPrice - commissionAmount - fixedFee);
+    return h('div', { className: 'space-y-6 animate-fade-in max-w-4xl mx-auto pb-12' },
 
-    return h('div', { className: 'space-y-6 animate-fade-in max-w-4xl mx-auto' },
-      /* Top Banner Info */
-      h('div', { className: 'bg-pink-50 border border-pink-200 rounded-2xl p-5 flex items-center justify-between' },
-        h('div', null,
-          h('h2', { className: 'text-base font-black text-pink-950' }, 'Modul 3: Harga Aplikasi Online (Reverse-Margin)'),
-          h('p', { className: 'text-xs text-pink-900 mt-0.5 leading-relaxed' },
-            'Menghitung harga pendaftaran produk di GoFood/GrabFood/ShopeeFood agar setelah dipotong komisi, ',
-            h('strong', null, 'pendapatan bersih tetap utuh sama persis dengan harga jual offline'),
-            '.'
+      /* Module Banner */
+      h('div', { className: 'bg-[#F0E6D2] rounded-3xl p-6 shadow-xs border border-[#D4C8B5] space-y-2' },
+        h('div', { className: 'flex items-center gap-2' },
+          h('span', { className: 'text-xs font-extrabold uppercase tracking-wider text-[#241710] bg-[#D4C8B5] px-2.5 py-1 rounded-lg border border-[#BDB6A3]' }, 'Modul 3: Reverse-Margin Online'),
+          h('span', { className: 'text-xs text-[#6B5541] font-bold' }, '• GoFood / GrabFood / ShopeeFood')
+        ),
+        h('h2', { className: 'text-xl font-black text-[#241710]' }, '🛵 Harga Aplikasi Online (Reverse-Margin)'),
+        h('p', { className: 'text-xs text-[#6B5541] max-w-xl font-semibold' },
+          'Hitung harga markup otomatis agar pendapatan bersih yang cair ke kantong Anda tetap sama persis dengan harga toko offline meski dipotong komisi.'
+        )
+      ),
+
+      /* Calculation Card */
+      h('div', { className: 'bg-[#F0E6D2] rounded-3xl p-6 md:p-8 shadow-xs border border-[#D4C8B5] space-y-6' },
+        
+        /* Inputs & Platform Settings */
+        h('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4 pb-6 border-b border-[#D4C8B5]' },
+          
+          /* Target Payout Base (Harga Offline) */
+          h('div', { className: 'p-4 rounded-2xl bg-white border border-[#D4C8B5] space-y-1' },
+            h('span', { className: 'text-[11px] font-extrabold uppercase tracking-wider text-[#6B5541] block' }, 'Target Cair Bersih (Offline):'),
+            h('span', { className: 'text-xl font-black text-[#241710] font-mono block' }, fmtIDR(offlineData.effectiveOfflinePrice)),
+            h('span', { className: 'text-[10px] text-[#6B5541] font-semibold' }, 'Dari Modul 2')
+          ),
+
+          /* Commission % Input */
+          h('div', { className: 'p-4 rounded-2xl bg-white border border-[#D4C8B5] space-y-1' },
+            h('label', { className: 'text-[11px] font-extrabold uppercase tracking-wider text-[#241710] block' }, 'Komisi Platform App:'),
+            h('div', { className: 'w-full' },
+              h(FlexibleInput, {
+                value: prod.commissionPercent,
+                onChange: (v) => onUpdateProduct('commissionPercent', v),
+                suffix: '%'
+              })
+            ),
+            h('span', { className: 'text-[10px] text-[#6B5541] font-semibold' }, 'Standar Grab/Gojek/Shopee ~20%')
+          ),
+
+          /* Fixed Fee Input */
+          h('div', { className: 'p-4 rounded-2xl bg-white border border-[#D4C8B5] space-y-1' },
+            h('label', { className: 'text-[11px] font-extrabold uppercase tracking-wider text-[#241710] block' }, 'Biaya Layanan Tetap:'),
+            h('div', { className: 'w-full' },
+              h(FlexibleInput, {
+                value: prod.fixedFee,
+                onChange: (v) => onUpdateProduct('fixedFee', v),
+                prefix: 'Rp'
+              })
+            ),
+            h('span', { className: 'text-[10px] text-[#6B5541] font-semibold' }, 'Biaya per transaksi (misal: Rp 1.000)')
           )
-        )
-      ),
 
-      /* Online App Platform Settings Inputs */
-      h('div', { className: 'app-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4' },
-        h('div', null,
-          h('label', { className: 'text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-1' }, 'Komisi Platform (%)'),
-          h('div', { className: 'relative' },
-            h(FlexibleInput, {
-              value: prod.commissionPercent,
-              onChange: (v) => onUpdateProduct('commissionPercent', Math.min(99, Math.max(0, v))),
-              suffix: '%'
-            })
-          ),
-          h('p', { className: 'text-[10px] text-slate-400 mt-1' }, 'Potongan komisi platform (misal: 20%).')
         ),
 
-        h('div', null,
-          h('label', { className: 'text-xs font-extrabold uppercase tracking-wider text-slate-600 block mb-1' }, 'Biaya Tetap Aplikasi (Rp)'),
-          h('div', { className: 'relative' },
-            h(FlexibleInput, {
-              value: prod.fixedFee,
-              onChange: (v) => onUpdateProduct('fixedFee', Math.max(0, v)),
-              prefix: 'Rp'
-            })
-          ),
-          h('p', { className: 'text-[10px] text-slate-400 mt-1' }, 'Biaya tambahan bernilai tetap per transaksi.')
-        )
-      ),
-
-      /* Reverse Margin Detailed Explanation Box */
-      h('div', { className: 'app-card p-6 space-y-4' },
-        h('h3', { className: 'text-xs font-extrabold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-2' },
-          'Detail Formula & Kalkulasi Reverse-Margin'
-        ),
-
-        h('div', { className: 'bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2.5' },
-          h('p', { className: 'text-[10px] font-extrabold text-slate-500 uppercase tracking-wider' }, 'Metode Presisi:'),
-          h('div', { className: 'font-mono bg-white border border-slate-200 p-2 rounded-lg text-center font-extrabold text-slate-800' },
-            'Harga Aplikasi = (Harga Offline + Biaya Tetap) ÷ (1 − Komisi %)'
+        /* Recommended Online Price Box */
+        h('div', { className: 'space-y-3' },
+          h('div', { className: 'flex items-center justify-between' },
+            h('span', { className: 'text-xs font-extrabold uppercase tracking-wider text-[#6B5541]' }, 'Formula Reverse-Margin:'),
+            h('span', { className: 'text-xs text-[#6B5541] font-mono font-bold' }, '(Harga Offline + Biaya Tetap) / (1 - Komisi)')
           ),
 
-          h('div', { className: 'space-y-1.5 pt-2 border-t border-slate-200 text-slate-700 font-semibold' },
-            h('div', { className: 'flex justify-between' },
-              h('span', null, 'Harga Offline Dasar:'),
-              h('span', { className: 'font-extrabold text-slate-900' }, fmtIDR(basePrice))
-            ),
-            h('div', { className: 'flex justify-between' },
-              h('span', null, 'Biaya Layanan Tetap:'),
-              h('span', { className: 'font-extrabold text-slate-900' }, `+${fmtIDR(fixedFee)}`)
-            ),
-            h('div', { className: 'flex justify-between' },
-              h('span', null, `Faktor Pembagi Komisi (${prod.commissionPercent}%):`),
-              h('span', { className: 'font-extrabold text-slate-900' }, `÷ ${(1 - commFrac).toFixed(2)}`)
-            ),
-            h('div', { className: 'flex justify-between pt-2 border-t border-dashed border-slate-200 text-base font-black text-pink-700' },
-              h('span', null, 'Harga Terdaftar di Aplikasi Online:'),
-              h('span', null, fmtIDR(appPrice))
+          /* Sable Brown Header Card - NO BLUE, NO GREEN */
+          h('div', { className: 'p-6 rounded-3xl bg-[#4A3427] text-white shadow-xs space-y-3 border border-[#241710]' },
+            h('div', { className: 'flex flex-col sm:flex-row sm:items-center justify-between gap-4' },
+              h('div', null,
+                h('span', { className: 'text-xs font-extrabold uppercase tracking-wider text-white block' }, 'REKOMENDASI HARGA JUAL ONLINE:'),
+                h('span', { className: 'text-3xl font-black text-white font-mono tracking-tight block mt-0.5' },
+                  fmtIDR(onlineData.effectiveOnlinePrice)
+                )
+              ),
+              h('div', { className: 'w-full sm:w-56 bg-white text-[#241710] rounded-xl p-1.5 shadow-inner' },
+                h('label', { className: 'text-[10px] text-[#6B5541] font-bold uppercase block px-2' }, 'Override Manual Harga Online:'),
+                h(FlexibleInput, {
+                  value: onlineData.effectiveOnlinePrice,
+                  onChange: (v) => onUpdateProduct('customOnlinePrice', v),
+                  prefix: 'Rp'
+                })
+              )
             )
           )
         ),
 
-        /* Step-by-step Payout Proof */
-        h('div', { className: 'bg-pink-50/60 border border-pink-200 rounded-xl p-4 text-xs space-y-2' },
-          h('p', { className: 'text-[10px] font-extrabold text-pink-800 uppercase tracking-wider' },
-            'Pembuktian Arus Payout Bersih UMKM'
+        /* Simulation Proof Box */
+        h('div', { className: 'p-5 rounded-2xl bg-white border border-[#D4C8B5] space-y-3 text-xs' },
+          h('span', { className: 'font-extrabold uppercase tracking-wider text-[#241710] block border-b border-[#D4C8B5] pb-2' },
+            '🧾 SIMULASI PENCAIRAN BERSIH (NET PAYOUT TOKO):'
           ),
-          h('div', { className: 'flex justify-between text-slate-700 font-medium' },
-            h('span', null, 'Harga Terdaftar di Aplikasi:'),
-            h('span', null, fmtIDR(appPrice))
-          ),
-          h('div', { className: 'flex justify-between text-rose-600 font-semibold' },
-            h('span', null, `Potongan Komisi Platform (${prod.commissionPercent}%):`),
-            h('span', null, `−${fmtIDR(commissionAmount)}`)
-          ),
-          h('div', { className: 'flex justify-between text-rose-600 font-semibold' },
-            h('span', null, 'Potongan Biaya Tetap:'),
-            h('span', null, `−${fmtIDR(fixedFee)}`)
-          ),
-          h('div', { className: 'flex justify-between pt-2 border-t border-pink-200 font-black text-purple-750 text-sm' },
-            h('span', null, 'Pendapatan Bersih (Net Payout):'),
-            h('span', null, fmtIDR(netPayout))
-          ),
-          h('p', { className: 'text-[10px] text-slate-500 italic mt-1' },
-            `✓ Diterima bersih ${fmtIDR(netPayout)} (sama persis dengan harga jual offline, margin modal aman 100%!).`
+          h('div', { className: 'space-y-1.5 text-[#374151] font-semibold' },
+            h('div', { className: 'flex justify-between' },
+              h('span', null, '• Harga Terdaftar di Aplikasi:'),
+              h('span', { className: 'font-mono font-black text-[#241710]' }, fmtIDR(onlineData.effectiveOnlinePrice))
+            ),
+            h('div', { className: 'flex justify-between text-rose-600 font-extrabold' },
+              h('span', null, `• Potongan Komisi (${prod.commissionPercent}%):`),
+              h('span', { className: 'font-mono font-bold' }, `- ${fmtIDR(onlineData.commissionAmount)}`)
+            ),
+            h('div', { className: 'flex justify-between text-rose-600 font-extrabold' },
+              h('span', null, '• Potongan Biaya Layanan Tetap:'),
+              h('span', { className: 'font-mono font-bold' }, `- ${fmtIDR(prod.fixedFee)}`)
+            ),
+            h('div', { className: 'flex justify-between pt-2 border-t border-[#D4C8B5] text-sm font-black text-[#241710] bg-[#F7F3E9] p-2.5 rounded-xl' },
+              h('span', null, '✅ Uang Cair Bersih ke Penjual:'),
+              h('span', { className: 'font-mono' },
+                `${fmtIDR(onlineData.simulatedPayout)} (Sama persis dengan toko offline!)`
+              )
+            )
           )
         ),
 
-        /* Side-by-side comparison */
-        h('div', { className: 'grid grid-cols-2 gap-4 pt-2' },
-          h('div', { className: 'app-card p-4 text-center border-2 border-slate-200' },
-            h('span', { className: 'text-[10px] font-extrabold uppercase tracking-wider text-slate-400' }, 'Harga Offline'),
-            h('span', { className: 'text-xl font-black text-slate-900 block mt-1' }, fmtIDR(basePrice)),
-            h('span', { className: 'text-[10px] text-slate-400 font-semibold block mt-1' }, 'Beli Langsung di Toko')
-          ),
-
-          h('div', { className: 'app-card p-4 text-center border-2 border-pink-200 bg-pink-50/20' },
-            h('span', { className: 'text-[10px] font-extrabold uppercase tracking-wider text-pink-700' }, 'Harga Aplikasi Online'),
-            h('span', { className: 'text-xl font-black text-pink-700 block mt-1' }, fmtIDR(appPrice)),
-            h('span', { className: 'text-[10px] text-pink-650 font-semibold block mt-1' }, 'Termasuk Markup Komisi')
+        /* Bottom Action Button - NO BLUE */
+        h('div', { className: 'flex justify-end pt-2' },
+          h('button', {
+            onClick: () => onNavigateTab('promo'),
+            className: 'btn-primary-brown text-white font-extrabold text-xs px-6 py-3.5 rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer'
+          },
+            'Lanjut ke Modul 4: Pusat Simulasi Diskon & Promo ➔'
           )
         )
+
       )
     );
   };

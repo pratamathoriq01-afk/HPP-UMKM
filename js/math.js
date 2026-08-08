@@ -1,164 +1,225 @@
-/* ─────────────────── FINANCIAL MATH ENGINE (PRO-GROWTH LEDGER) ─────────────────── */
+/* ─────────────────── FINANCIAL MATH ENGINE (MARKDOWN REV SPEC) ─────────────────── */
 window.AppMath = {
   formatIDR: function(val) {
-    const num = Math.round(val || 0);
+    if (val === undefined || val === null || isNaN(val)) return 'Rp 0';
+    const num = Math.round(val);
     return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
   },
 
-  calculateHPP: function(prod) {
-    const totalMaterials = (prod.materials || []).reduce(
-      (sum, m) => sum + (parseFloat(m.qty) || 0) * (parseFloat(m.unitPrice) || 0), 0
-    );
-    const totalLabors = (prod.labors || []).reduce(
-      (sum, l) => sum + (parseFloat(l.price) || 0), 0
-    );
-    const totalOverheads = (prod.overheads || []).reduce(
-      (sum, o) => sum + (parseFloat(o.price) || 0), 0
-    );
+  formatDecimalIDR: function(val) {
+    if (val === undefined || val === null || isNaN(val)) return 'Rp 0';
+    const formatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(val);
+    return 'Rp ' + formatted;
+  },
 
-    const totalProductionCost = totalMaterials + totalLabors + totalOverheads;
-    const qty = Math.max(1, parseInt(prod.targetQty, 10) || 1);
-    const hppPerUnit = totalProductionCost / qty;
+  /* Modul 1: Biaya Produksi & HPP Murni per Porsi */
+  calculateHPP: function(prod) {
+    // A. Bahan Baku Utama
+    let totalMainMaterials = 0;
+    const mainList = (prod.mainMaterials || []).map(item => {
+      const price = parseFloat(item.totalPrice) || 0;
+      const portions = Math.max(1, parseFloat(item.portions) || 1);
+      const hppPerPortion = price / portions;
+      totalMainMaterials += hppPerPortion;
+      return { ...item, hppPerPortion };
+    });
+
+    // B. Bahan Habis Pakai (BOP Variabel)
+    let totalBopMaterials = 0;
+    const bopList = (prod.bopMaterials || []).map(item => {
+      const price = parseFloat(item.totalPrice) || 0;
+      const capacity = Math.max(0.001, parseFloat(item.capacity) || 1);
+      const usage = parseFloat(item.usage) || 0;
+      const portions = Math.max(1, parseFloat(item.portions) || 1);
+      
+      const recipeCost = (price / capacity) * usage;
+      const hppPerPortion = recipeCost / portions;
+      totalBopMaterials += hppPerPortion;
+      return { ...item, recipeCost, hppPerPortion };
+    });
+
+    // C. Kemasan (Packaging)
+    let totalPackagings = 0;
+    const packList = (prod.packagings || []).map(item => {
+      const price = parseFloat(item.totalPrice) || 0;
+      const itemsPerPack = Math.max(1, parseFloat(item.itemsPerPack) || 1);
+      const hppPerPortion = price / itemsPerPack;
+      totalPackagings += hppPerPortion;
+      return { ...item, hppPerPortion };
+    });
+
+    // Total HPP Murni / Porsi
+    const hppMurni = totalMainMaterials + totalBopMaterials + totalPackagings;
+
+    // Proporsi Biaya (%)
+    const mainPct = hppMurni > 0 ? (totalMainMaterials / hppMurni) * 100 : 0;
+    const bopPct = hppMurni > 0 ? (totalBopMaterials / hppMurni) * 100 : 0;
+    const packPct = hppMurni > 0 ? (totalPackagings / hppMurni) * 100 : 0;
 
     return {
-      totalMaterials,
-      totalLabors,
-      totalOverheads,
-      totalProductionCost,
-      qty,
-      hppPerUnit
+      mainList,
+      bopList,
+      packList,
+      totalMainMaterials,
+      totalBopMaterials,
+      totalPackagings,
+      hppMurni,
+      mainPct,
+      bopPct,
+      packPct
     };
   },
 
-  calculateBaseSellingPrice: function(hpp, prod) {
-    let computedMarginNominal = 0;
-    let computedMarginPercent = 0;
+  /* Modul 2: Harga Jual Toko (Offline) */
+  calculateOfflinePrice: function(hppMurni, prod) {
+    const marginPercent = parseFloat(prod.marginPercent) || 0;
+    const recommendedPriceRaw = hppMurni + (hppMurni * (marginPercent / 100));
+    const recommendedPrice = Math.ceil(recommendedPriceRaw / 100) * 100; // Pembulatan terdekat
 
-    if (prod.marginMode === 'percent') {
-      computedMarginPercent = prod.marginPercent || 0;
-      computedMarginNominal = hpp * (computedMarginPercent / 100);
-    } else {
-      computedMarginNominal = prod.marginNominal || 0;
-      computedMarginPercent = hpp > 0 ? (computedMarginNominal / hpp) * 100 : 0;
+    const effectiveOfflinePrice = prod.customOfflinePrice && prod.customOfflinePrice > 0
+      ? parseFloat(prod.customOfflinePrice)
+      : recommendedPrice;
+
+    const netOfflineMargin = effectiveOfflinePrice - hppMurni;
+    const marginRatio = effectiveOfflinePrice > 0 ? (netOfflineMargin / effectiveOfflinePrice) * 100 : 0;
+
+    let marginStatus = window.AppConfig.MARGIN_STATUS.CRITICAL;
+    if (marginRatio >= window.AppConfig.MARGIN_STATUS.HEALTHY.min) {
+      marginStatus = window.AppConfig.MARGIN_STATUS.HEALTHY;
+    } else if (marginRatio >= window.AppConfig.MARGIN_STATUS.MODERATE.min) {
+      marginStatus = window.AppConfig.MARGIN_STATUS.MODERATE;
     }
 
-    const basePrice = hpp + computedMarginNominal;
-    const hppRatio = basePrice > 0 ? (hpp / basePrice) * 100 : 0;
-    const marginRatio = basePrice > 0 ? (computedMarginNominal / basePrice) * 100 : 0;
-
     return {
-      marginNominal: computedMarginNominal,
-      marginPercent: computedMarginPercent,
-      basePrice,
-      hppRatio,
-      marginRatio
+      marginPercent,
+      recommendedPriceRaw,
+      recommendedPrice,
+      effectiveOfflinePrice,
+      netOfflineMargin,
+      marginRatio,
+      marginStatus
     };
   },
 
-  calculateOfflineDiscount: function(basePrice, hpp, prod) {
+  /* Modul 2B: Simulasi Promo Toko (Offline) */
+  calculateOfflinePromo: function(basePrice, hppMurni, prod) {
     const isOfflinePromoActive = !!prod.offlinePromoEnabled;
-    let discountNominal = 0;
-    let discountPercent = 0;
+    const mode = prod.offlineDiscountMode || 'percent';
+    let discountPercent = parseFloat(prod.offlineDiscountPercent) || 0;
+    let discountNominal = parseFloat(prod.offlineDiscountNominal) || 0;
 
     if (isOfflinePromoActive) {
-      if (prod.offlineDiscountMode === 'percent') {
-        discountPercent = prod.offlineDiscountPercent || 0;
+      if (mode === 'percent') {
         discountNominal = basePrice * (discountPercent / 100);
       } else {
-        discountNominal = prod.offlineDiscountNominal || 0;
         discountPercent = basePrice > 0 ? (discountNominal / basePrice) * 100 : 0;
       }
+    } else {
+      discountNominal = 0;
+      discountPercent = 0;
     }
 
-    const finalOfflinePrice = Math.max(0, basePrice - discountNominal);
-    const netOfflineMargin = finalOfflinePrice - hpp;
-    const isOfflineLosing = netOfflineMargin < 0;
+    const priceAfterDiscount = Math.max(0, basePrice - discountNominal);
+    const netMarginAfterDiscount = priceAfterDiscount - hppMurni;
+    const isLosing = isOfflinePromoActive && (netMarginAfterDiscount < 0);
 
     return {
       isOfflinePromoActive,
-      discountNominal,
+      mode,
       discountPercent,
-      finalOfflinePrice,
-      netOfflineMargin,
-      isOfflineLosing
+      discountNominal,
+      priceAfterDiscount,
+      netMarginAfterDiscount,
+      isLosing
     };
   },
 
-  calculateAppSellingPrice: function(basePrice, prod) {
-    const commFrac = (prod.commissionPercent || 0) / 100;
-    const fixedFee = prod.fixedFee || 0;
-
-    if (commFrac >= 1) return { appPrice: 0, commFrac, fixedFee };
-
-    // Reverse-Margin formula
-    const appPrice = (basePrice + fixedFee) / (1 - commFrac);
-    return {
-      appPrice,
-      commFrac,
-      fixedFee
-    };
-  },
-
-  /* Precise Customer Order Simulation for Online App Promos */
-  calculateOnlinePromo: function(appPrice, hpp, prod, orderQtyParam) {
-    const isOnlinePromoActive = !!prod.promoEnabled;
-    const orderQty = Math.max(1, parseInt(orderQtyParam || prod.simOrderQty || 2, 10));
-    const commPercent = prod.commissionPercent || 0;
+  /* Modul 3: Harga Aplikasi Online (Reverse-Margin) */
+  calculateOnlinePrice: function(offlinePrice, prod) {
+    const commPercent = parseFloat(prod.commissionPercent) || 0;
     const commFrac = commPercent / 100;
-    const fixedFee = prod.fixedFee || 0;
-    const promoPercent = prod.promoPercent || 0;
-    const minOrder = prod.promoMinOrder || 0;
-    const maxDiscountCap = prod.promoMaxDiscount || 0;
+    const fixedFee = parseFloat(prod.fixedFee) || 0;
 
-    const orderSubtotal = orderQty * appPrice;
-    const isPromoValid = isOnlinePromoActive && (orderSubtotal >= minOrder);
-
-    const rawDiscount = isOnlinePromoActive ? orderSubtotal * (promoPercent / 100) : 0;
-    const effectiveDiscount = isPromoValid ? Math.min(rawDiscount, maxDiscountCap) : 0;
-    const finalCustomerPays = Math.max(0, orderSubtotal - effectiveDiscount);
-
-    // Platform commission and fee deducted from payout
-    const appCommissionAmount = (finalCustomerPays * commFrac) + fixedFee;
-    const netPayoutOnline = Math.max(0, finalCustomerPays - appCommissionAmount);
-    
-    const totalHPPOrder = orderQty * hpp;
-    const netMarginOnlineTotal = netPayoutOnline - totalHPPOrder;
-    const netMarginOnlinePerUnit = netMarginOnlineTotal / orderQty;
-    const isOnlineLosing = isOnlinePromoActive && isPromoValid && (netMarginOnlineTotal < 0);
-
-    // Per-unit breakdown values for clean receipt rendering
-    const discountPerUnit = effectiveDiscount / orderQty;
-    const customerPaysPerUnit = finalCustomerPays / orderQty;
-    const appCommissionPerUnit = appCommissionAmount / orderQty;
-    const netPayoutPerUnit = netPayoutOnline / orderQty;
-
-    // BEP Limit Calculation per transaction order
-    let bepDiscountNominal = 0;
+    let recommendedOnlineRaw = 0;
     if (commFrac < 1) {
-      const minPayoutRequiredTotal = (totalHPPOrder + fixedFee) / (1 - commFrac);
-      bepDiscountNominal = Math.max(0, orderSubtotal - minPayoutRequiredTotal);
+      // Formula Reverse Margin: (Harga Offline + Biaya Tetap) / (1 - Komisi)
+      recommendedOnlineRaw = (offlinePrice + fixedFee) / (1 - commFrac);
     }
-    const bepDiscountPercent = orderSubtotal > 0 ? (bepDiscountNominal / orderSubtotal) * 100 : 0;
+    const recommendedOnline = Math.ceil(recommendedOnlineRaw / 500) * 500;
+
+    const effectiveOnlinePrice = prod.customOnlinePrice && prod.customOnlinePrice > 0
+      ? parseFloat(prod.customOnlinePrice)
+      : recommendedOnline;
+
+    const commissionAmount = effectiveOnlinePrice * commFrac;
+    const simulatedPayout = effectiveOnlinePrice - commissionAmount - fixedFee;
 
     return {
-      isOnlinePromoActive,
+      commPercent,
+      commFrac,
+      fixedFee,
+      recommendedOnlineRaw,
+      recommendedOnline,
+      effectiveOnlinePrice,
+      commissionAmount,
+      simulatedPayout
+    };
+  },
+
+  /* Modul 4: Pusat Simulasi Diskon & Promo Online */
+  calculatePromoSim: function(hppMurni, onlinePrice, prod) {
+    const orderQty = Math.max(1, parseInt(prod.simOrderQty, 10) || 1);
+    const orderSubtotal = orderQty * onlinePrice;
+    
+    const minOrder = parseFloat(prod.promoMinOrder) || 0;
+    const promoPercent = parseFloat(prod.promoPercent) || 0;
+    const maxDiscountCap = parseFloat(prod.promoMaxDiscount) || 0;
+    const isPromoActive = !!prod.promoEnabled;
+    const deductionMode = prod.commissionDeductionMode || 'before_discount';
+
+    const isMinOrderMet = isPromoActive && (orderSubtotal >= minOrder);
+    const rawDiscount = isPromoActive ? orderSubtotal * (promoPercent / 100) : 0;
+    const isDiscountCapped = isMinOrderMet && (rawDiscount > maxDiscountCap) && (maxDiscountCap > 0);
+    const effectiveDiscount = isMinOrderMet ? (maxDiscountCap > 0 ? Math.min(rawDiscount, maxDiscountCap) : rawDiscount) : 0;
+    
+    const customerPays = Math.max(0, orderSubtotal - effectiveDiscount);
+
+    // Potongan Komisi Aplikasi
+    const commPercent = parseFloat(prod.commissionPercent) || 0;
+    const commFrac = commPercent / 100;
+    const fixedFee = parseFloat(prod.fixedFee) || 0;
+
+    const commissionBase = deductionMode === 'after_discount' ? customerPays : orderSubtotal;
+    const appCommissionTotal = (commissionBase * commFrac) + fixedFee;
+
+    // Uang Cair ke Penjual (Net Payout)
+    const netPayout = Math.max(0, customerPays - appCommissionTotal);
+    
+    // Beban HPP Total & Net Profit
+    const totalHPPOrder = orderQty * hppMurni;
+    const netProfit = netPayout - totalHPPOrder;
+    const isBoncos = netProfit < 0;
+
+    return {
+      isPromoActive,
       orderQty,
       orderSubtotal,
+      minOrder,
+      promoPercent,
+      maxDiscountCap,
+      isMinOrderMet,
       rawDiscount,
+      isDiscountCapped,
       effectiveDiscount,
-      discountPerUnit,
-      isPromoValid,
-      finalCustomerPays,
-      customerPaysPerUnit,
-      appCommissionAmount,
-      appCommissionPerUnit,
-      netPayoutOnline,
-      netPayoutPerUnit,
-      netMarginOnline: netMarginOnlinePerUnit,
-      netMarginOnlineTotal,
-      isOnlineLosing,
-      bepDiscountNominal,
-      bepDiscountPercent
+      customerPays,
+      deductionMode,
+      commissionBase,
+      appCommissionTotal,
+      netPayout,
+      totalHPPOrder,
+      netProfit,
+      isBoncos
     };
   }
 };
+

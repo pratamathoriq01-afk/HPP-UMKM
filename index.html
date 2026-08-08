@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProfitCalc UMKM - Kalkulator Keuangan & HPP SAK EMKM</title>
-  <meta name="description" content="Kalkulator Keuangan & Harga Jual UMKM SAK EMKM: HPP Produksi, Harga Offline, Reverse-Margin Online, dan Struk Digital Live.">
+  <title>Kalkulator Keuangan UMKM Pintar - Standar SAK EMKM & Juragan AI Advisor</title>
+  <meta name="description" content="Kalkulator Keuangan & HPP UMKM SAK EMKM: HPP Murni, Pricing Toko Offline, Reverse-Margin Online, Proteksi Promo Boncos, dan Integrasi Juragan AI Advisor.">
 
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: Inter & JetBrains Mono for High-Legibility Minimalist Design -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS v4 CDN -->
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
@@ -21,20 +21,28 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 </head>
-<body class="bg-[#f8f9ff] text-[#0d1c2e] min-h-screen">
+<body class="bg-[#F7F3E9] text-[#241710] min-h-screen">
   <div id="root"></div>
 
-  <!-- Modular Pure JavaScript Engine & Components -->
+  <!-- Modular Pure JavaScript Engines -->
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/math.js"></script>
-  
-  <!-- Components -->
+  <script src="js/aiEngine.js"></script>
+
+  <!-- Modular Components ("Kamar Code Terpisah") -->
   <script src="js/components/FlexibleInput.js"></script>
   <script src="js/components/Header.js"></script>
   <script src="js/components/Drawer.js"></script>
-  <script src="js/components/LeftColumn.js"></script>
+  <script src="js/components/DashboardMenu.js"></script>
+  <script src="js/components/TabHPP.js"></script>
+  <script src="js/components/TabOffline.js"></script>
+  <script src="js/components/TabOnline.js"></script>
+  <script src="js/components/TabPromo.js"></script>
+  <script src="js/components/TabSummarize.js"></script>
+  <script src="js/components/AIAssistantModal.js"></script>
   <script src="js/components/RightSummary.js"></script>
+  <script src="js/components/LeftColumn.js"></script>
   
   <!-- Main Orchestrator -->
   <script src="js/app.js"></script>

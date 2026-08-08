@@ -1,80 +1,101 @@
-/* ─────────────────── CONFIG & PRESET DATA ─────────────────── */
+/* ─────────────────── CONFIG & PRESET DATA (MARKDOWN REV SPEC) ─────────────────── */
 window.AppConfig = {
   UNITS: [
-    'gram', 'kg', 'ml', 'liter', 'butir', 'sendok', 'sdm', 'sdt', 
-    'porsi', 'bungkus', 'pcs', 'buah', 'lembar', 'ikat', 'siung', 'batang'
+    'porsi', 'pcs', 'gram', 'kg', 'ml', 'liter', 'butir', 'sendok', 'sdm', 'sdt', 
+    'bungkus', 'buah', 'lembar', 'ikat', 'siung', 'batang'
   ],
+
+  MARGIN_STATUS: {
+    HEALTHY: { min: 30, label: 'Sehat', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: '🟢' },
+    MODERATE: { min: 15, label: 'Pas-pasan', badgeClass: 'bg-amber-100 text-amber-800 border-amber-300', icon: '🟡' },
+    CRITICAL: { min: 0, label: 'Kritis', badgeClass: 'bg-rose-100 text-rose-800 border-rose-300', icon: '🔴' }
+  },
 
   DEFAULT_PRESETS: [
     {
       id: 1,
-      name: 'Nasi Goreng Spesial',
-      targetQty: 50,
-      materials: [
-        { id: 1, name: 'Beras Bulog Pulen', qty: 5, unit: 'kg', unitPrice: 13500 },
-        { id: 2, name: 'Telur Ayam Negeri', qty: 10, unit: 'butir', unitPrice: 2800 },
-        { id: 3, name: 'Daging Ayam Fillet', qty: 1500, unit: 'gram', unitPrice: 42 },
-        { id: 4, name: 'Minyak Goreng Sawit', qty: 500, unit: 'ml', unitPrice: 18 },
-        { id: 5, name: 'Bumbu Racikan Utama', qty: 1, unit: 'bungkus', unitPrice: 15000 }
+      name: 'Nasi Ayam Marinasi Spesial',
+      // Category A: Bahan Baku Utama
+      mainMaterials: [
+        { id: 1, name: 'Ayam', totalPrice: 40000, portions: 8, unit: 'porsi' },
+        { id: 2, name: 'Beras', totalPrice: 17500, portions: 10, unit: 'porsi' }
       ],
-      labors: [
-        { id: 1, name: 'Upah Asisten Masak per Batch', price: 45000 }
+      // Category B: Bahan Habis Pakai (BOP Variabel)
+      bopMaterials: [
+        { id: 1, name: 'Minyak Goreng', totalPrice: 43000, capacity: 2000, capUnit: 'ml', usage: 500, usageUnit: 'ml', portions: 8 },
+        { id: 2, name: 'Gas LPG 3kg', totalPrice: 21000, capacity: 3000, capUnit: 'gram', usage: 250, usageUnit: 'gram', portions: 8 }
       ],
-      overheads: [
-        { id: 1, name: 'Gas Melon LPG 3kg', price: 22000 },
-        { id: 2, name: 'Mika Box Premium + Sendok (50 pcs)', price: 45000 },
-        { id: 3, name: 'Listrik & Air Bersih', price: 8000 }
+      // Category C: Kemasan (Packaging)
+      packagings: [
+        { id: 1, name: 'Box Makanan', totalPrice: 65000, itemsPerPack: 100, unit: 'pcs' },
+        { id: 2, name: 'Kresek', totalPrice: 15000, itemsPerPack: 50, unit: 'pcs' }
       ],
-      marginMode: 'percent',
+      // Modul 2: Harga Offline
       marginPercent: 40,
-      marginNominal: 5000,
+      customOfflinePrice: 13000,
+      // Modul 3: Harga Online Reverse-Margin
       commissionPercent: 20,
       fixedFee: 1000,
-      // Offline promo settings
-      offlinePromoEnabled: false,
-      offlineDiscountMode: 'percent',
-      offlineDiscountPercent: 10,
-      offlineDiscountNominal: 2000,
-      // Online promo settings
-      promoEnabled: false,
-      simOrderQty: 2,
-      promoPercent: 30,
+      customOnlinePrice: 17500,
+      // Modul 4: Pusat Simulasi Diskon
+      simOrderQty: 3,
+      promoEnabled: true,
       promoMinOrder: 40000,
-      promoMaxDiscount: 20000
+      promoPercent: 40,
+      promoMaxDiscount: 15000,
+      commissionDeductionMode: 'before_discount' // 'before_discount' | 'after_discount'
     },
     {
       id: 2,
-      name: 'Es Kopi Susu Aren',
-      targetQty: 30,
-      materials: [
-        { id: 1, name: 'Biji Kopi Arabika', qty: 500, unit: 'gram', unitPrice: 150 },
-        { id: 2, name: 'Susu UHT Full Cream', qty: 3, unit: 'liter', unitPrice: 18500 },
-        { id: 3, name: 'Gula Aren Cair', qty: 1, unit: 'liter', unitPrice: 25000 },
-        { id: 4, name: 'Es Batu Kristal', qty: 1, unit: 'bungkus', unitPrice: 10000 }
+      name: 'Nasi Kulit Krispi',
+      mainMaterials: [
+        { id: 1, name: 'Kulit Ayam Fresh', totalPrice: 35000, portions: 10, unit: 'porsi' },
+        { id: 2, name: 'Beras Pulen', totalPrice: 17500, portions: 10, unit: 'porsi' },
+        { id: 3, name: 'Tepung Bumbu Crispy', totalPrice: 15000, portions: 10, unit: 'porsi' }
       ],
-      labors: [
-        { id: 1, name: 'Upah Barista per Shift (Proporsional)', price: 30000 }
+      bopMaterials: [
+        { id: 1, name: 'Minyak Goreng', totalPrice: 20000, capacity: 1000, capUnit: 'ml', usage: 300, usageUnit: 'ml', portions: 10 }
       ],
-      overheads: [
-        { id: 1, name: 'Cup Plastik + Sedotan + Seal (30 pcs)', price: 27000 },
-        { id: 2, name: 'Listrik & Utilitas Mesin Kopi', price: 15000 }
+      packagings: [
+        { id: 1, name: 'Paper Rice Bowl', totalPrice: 15000, itemsPerPack: 50, unit: 'pcs' }
       ],
-      marginMode: 'percent',
-      marginPercent: 50,
-      marginNominal: 4000,
+      marginPercent: 25,
+      customOfflinePrice: 10000,
       commissionPercent: 20,
       fixedFee: 1000,
-      // Offline promo settings
-      offlinePromoEnabled: false,
-      offlineDiscountMode: 'percent',
-      offlineDiscountPercent: 0,
-      offlineDiscountNominal: 0,
-      // Online promo settings
-      promoEnabled: false,
+      customOnlinePrice: 14000,
       simOrderQty: 2,
-      promoPercent: 25,
+      promoEnabled: false,
       promoMinOrder: 30000,
-      promoMaxDiscount: 15000
+      promoPercent: 20,
+      promoMaxDiscount: 10000,
+      commissionDeductionMode: 'before_discount'
+    },
+    {
+      id: 3,
+      name: 'Es Teh Manis',
+      mainMaterials: [
+        { id: 1, name: 'Teh Tubruk Melati', totalPrice: 10000, portions: 20, unit: 'porsi' },
+        { id: 2, name: 'Gula Pasir', totalPrice: 15000, portions: 30, unit: 'porsi' }
+      ],
+      bopMaterials: [
+        { id: 1, name: 'Es Batu Kristal', totalPrice: 10000, capacity: 10, capUnit: 'kg', usage: 2, usageUnit: 'kg', portions: 20 }
+      ],
+      packagings: [
+        { id: 1, name: 'Cup Plastik + Sedotan', totalPrice: 20000, itemsPerPack: 50, unit: 'pcs' }
+      ],
+      marginPercent: 10,
+      customOfflinePrice: 3000,
+      commissionPercent: 20,
+      fixedFee: 1000,
+      customOnlinePrice: 5000,
+      simOrderQty: 5,
+      promoEnabled: false,
+      promoMinOrder: 20000,
+      promoPercent: 15,
+      promoMaxDiscount: 5000,
+      commissionDeductionMode: 'before_discount'
     }
   ]
 };
+
